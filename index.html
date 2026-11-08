@@ -1,154 +1,394 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow App</title>
-    <!-- Подключаем скрипт Telegram Web App -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-color: #0F172A;
-            --surface-color: #1E293B;
-            --accent-green: #10B981;
-            --accent-indigo: #6366F1;
-            --text-primary: #F8FAFC;
-            --text-secondary: #94A3B8;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>TaskFlow</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0F172A; --panel:rgba(30,41,59,.62); --line:rgba(16,185,129,.28);
+  --acc:#10B981; --cy:#22D3EE; --hi:#F43F5E; --mid:#F59E0B; --lo:#10B981;
+  --tx:#E2E8F0; --mu:#64748B; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;overflow-x:hidden}
+body{min-height:100vh;min-height:100dvh}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+/* Фон: сетка, свечение, сканлайны */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(600px 300px at 80% -10%,rgba(16,185,129,.22),transparent 70%),
+    radial-gradient(500px 300px at -10% 100%,rgba(34,211,238,.12),transparent 70%),
+    linear-gradient(rgba(16,185,129,.05) 1px,transparent 1px) 0 0/36px 36px,
+    linear-gradient(90deg,rgba(16,185,129,.05) 1px,transparent 1px) 0 0/36px 36px}
+.bg::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 3px);opacity:.5}
 
-        .container {
-            width: 100%;
-            max-width: 400px;
-        }
+.app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(120px + env(safe-area-inset-bottom))}
 
-        h2 {
-            font-size: 24px;
-            margin-bottom: 5px;
-            color: var(--text-primary);
-        }
+/* Шапка */
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+h1{font-family:var(--mono);font-size:25px;font-weight:800;letter-spacing:4px;text-shadow:0 0 18px rgba(16,185,129,.55)}
+h1 span{color:var(--acc)}
+.sub{font-family:var(--mono);font-size:11px;color:var(--mu);margin-top:2px}
+.cur{display:inline-block;width:7px;height:12px;background:var(--acc);margin-left:3px;vertical-align:-2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.tools{display:flex;gap:8px}
+.ib{position:relative;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--acc);display:flex;align-items:center;justify-content:center;transition:.2s}
+.ib:active{transform:scale(.92);box-shadow:0 0 18px rgba(16,185,129,.6)}
+.ib b{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--mid);color:#0F172A;font:700 11px var(--mono);display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(245,158,11,.7)}
 
-        .subtitle {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
+/* Панели */
+.panel{position:relative;border:1px solid var(--line);border-radius:16px;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.panel::before,.panel::after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--acc);filter:drop-shadow(0 0 4px var(--acc))}
+.panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-radius:16px 0 0 0}
+.panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-radius:0 0 16px 0}
+.stats{display:flex;align-items:center;gap:18px;padding:16px 18px;margin-bottom:14px}
+.ring{position:relative;width:70px;height:70px;flex-shrink:0}
+.ring svg{width:70px;height:70px;transform:rotate(-90deg);stroke-width:5}
+.ring .bgc{stroke:rgba(16,185,129,.15)}
+.ring .fg{stroke:var(--acc);stroke-dasharray:163.4;stroke-dashoffset:163.4;transition:stroke-dashoffset .6s ease;filter:drop-shadow(0 0 5px var(--acc))}
+.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 15px var(--mono)}
+.lines{flex:1;font-family:var(--mono);font-size:13px;display:grid;gap:5px}
+.lines div{display:flex;justify-content:space-between;color:var(--mu)}
+.lines em{font-style:normal;color:var(--tx);font-weight:700}
+.lines .pend em{color:var(--mid)}
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+/* Вкладки */
+.tabs{display:flex;gap:6px;padding:4px;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:14px}
+.tab{flex:1;padding:10px 4px;border-radius:10px;font:600 12px var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--mu);transition:.2s}
+.tab i{font-style:normal;opacity:.7;margin-left:4px}
+.tab.on{background:rgba(16,185,129,.16);color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc),0 0 14px rgba(16,185,129,.35)}
 
-        input {
-            flex: 1;
-            background-color: var(--surface-color);
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+/* Задачи */
+.task{position:relative;display:flex;align-items:flex-start;gap:12px;padding:14px 12px 14px 16px;margin-bottom:10px;border:1px solid rgba(148,163,184,.14);border-radius:14px;background:var(--panel);animation:up .3s ease;overflow:hidden}
+.task::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);box-shadow:0 0 12px var(--c)}
+.p0{--c:var(--lo)}.p1{--c:var(--mid)}.p2{--c:var(--hi)}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.chk{width:26px;height:26px;border-radius:8px;border:2px solid var(--c);display:flex;align-items:center;justify-content:center;color:#0F172A;transition:.2s;flex-shrink:0;margin-top:1px}
+.chk svg{width:16px;height:16px;stroke-width:3.5;opacity:0;transform:scale(.4);transition:.2s}
+.task.done .chk{background:var(--acc);border-color:var(--acc);box-shadow:0 0 14px rgba(16,185,129,.7)}
+.task.done .chk svg{opacity:1;transform:none}
+.body{flex:1;min-width:0}
+.ttl{font-size:16px;line-height:1.35;word-break:break-word}
+.task.done .ttl{color:var(--mu);text-decoration:line-through}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font:600 10.5px var(--mono);letter-spacing:.6px}
+.chip{padding:3px 8px;border-radius:6px;border:1px solid rgba(148,163,184,.2);color:var(--mu);text-transform:uppercase}
+.chip.pr{color:var(--c);border-color:var(--c)}
+.chip.late{color:var(--hi);border-color:var(--hi)}.chip.today{color:var(--mid);border-color:var(--mid)}
+.chip.sy{color:var(--mid);border-color:rgba(245,158,11,.5)}
+.del{color:var(--mu);padding:4px;border-radius:8px}.del:active{color:var(--hi);transform:scale(.88)}
+.empty{text-align:center;padding:50px 20px;color:var(--mu);font-family:var(--mono);font-size:13px}
+.empty svg{width:42px;height:42px;color:var(--acc);opacity:.6;margin-bottom:12px}
 
-        input:focus {
-            border-color: var(--accent-green);
-        }
+/* Кнопка + */
+.fab{position:fixed;right:20px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:5;width:62px;height:62px;border-radius:18px;
+  background:linear-gradient(135deg,#34D399,var(--acc));color:#052e22;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px rgba(255,255,255,.2) inset,0 0 28px rgba(16,185,129,.7);animation:pulse 2.6s infinite;transition:transform .15s}
+.fab svg{width:30px;height:30px;stroke-width:3}
+.fab:active{transform:scale(.9) rotate(90deg)}
+@keyframes pulse{50%{box-shadow:0 0 0 1px rgba(255,255,255,.2) inset,0 0 44px rgba(16,185,129,.95)}}
 
-        button {
-            background-color: var(--accent-green);
-            color: #0F172A;
-            border: none;
-            border-radius: 12px;
-            padding: 0 20px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
+/* Окна */
+.overlay{position:fixed;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;background:rgba(2,6,23,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.overlay.on{display:flex}
+.sheet{width:100%;max-width:520px;padding:20px 18px calc(22px + env(safe-area-inset-bottom));border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;background:#111c33;box-shadow:0 -10px 40px rgba(16,185,129,.18);animation:slide .3s ease}
+@keyframes slide{from{transform:translateY(100%)}to{transform:none}}
+.sheet h2{font:700 13px var(--mono);letter-spacing:2px;color:var(--acc);margin-bottom:14px;text-transform:uppercase}
+.sheet input[type=text],.sheet input[type=date]{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.8);color:var(--tx);font:inherit;font-size:16px;outline:0;color-scheme:dark;transition:.2s}
+.sheet input:focus{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 0 18px rgba(16,185,129,.35)}
+.lbl{font:600 11px var(--mono);letter-spacing:1px;color:var(--mu);margin:14px 0 8px;text-transform:uppercase}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:11px 4px;border-radius:10px;border:1px solid rgba(148,163,184,.25);font:700 12px var(--mono);letter-spacing:1px;color:var(--mu);transition:.2s}
+.seg button.on{color:var(--c);border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 50%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.row{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;padding:15px;border-radius:12px;font-weight:700;font-size:15px;border:1px solid rgba(148,163,184,.25);transition:.15s}
+.btn.main{background:linear-gradient(135deg,#34D399,var(--acc));color:#052e22;border:0;box-shadow:0 0 22px rgba(16,185,129,.55)}
+.btn:active{transform:scale(.97)}
+.btn.warn{color:var(--hi);border-color:rgba(244,63,94,.5)}
+.set{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0}
+.set p{font-size:14px}.set small{display:block;color:var(--mu);font-size:12px;margin-top:3px;line-height:1.4}
+.sw{position:relative;width:48px;height:28px;border-radius:14px;background:#334155;flex-shrink:0;transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--acc);box-shadow:0 0 14px rgba(16,185,129,.6)}.sw.on::after{transform:translateX(20px)}
+.note{margin-top:10px;padding:12px;border-radius:12px;background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.25);font-size:12.5px;line-height:1.5;color:#A5E9F5}
 
-        button:active {
-            opacity: 0.8;
-        }
-
-        .tasks-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .task-card {
-            background-color: var(--surface-color);
-            padding: 14px 16px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid var(--accent-green);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .task-text {
-            font-size: 15px;
-            word-break: break-all;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-top: 40px;
-            font-size: 14px;
-        }
-    </style>
+#toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-120px);z-index:50;max-width:92%;padding:11px 18px;border-radius:12px;border:1px solid var(--acc);background:#0b1f1b;color:var(--acc);font:600 13px var(--mono);text-align:center;box-shadow:0 0 22px rgba(16,185,129,.5);transition:transform .3s}
+#toast.show{transform:translate(-50%,0)}
+#toast.err{border-color:var(--hi);color:#fda4af;background:#2a0f1a;box-shadow:0 0 22px rgba(244,63,94,.45)}
+</style>
 </head>
 <body>
+<div class="bg"></div>
 
-    <div class="container">
-        <h2>TaskFlow</h2>
-        <div class="subtitle">Твое личное хранилище задач</div>
-
-        <div class="input-group">
-            <input type="text" id="taskInput" placeholder="Новая задача...">
-            <button id="addBtn">+</button>
-        </div>
-
-        <div class="tasks-list" id="tasksList">
-            <!-- Список задач -->
-        </div>
-
-        <div id="emptyState" class="empty-state">
-            Введи задачу и нажми +, чтобы отправить её в бот.
-        </div>
+<main class="app">
+  <header class="top">
+    <div>
+      <h1>TASK<span>FLOW</span></h1>
+      <div class="sub">// system.tasks<i class="cur"></i></div>
     </div>
+    <div class="tools">
+      <button class="ib" id="btnSync" aria-label="Отправить боту"><svg viewBox="0 0 24 24"><path d="M12 16V4M12 4l-4 4M12 4l4 4M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b id="badge" hidden>0</b></button>
+      <button class="ib" id="btnSet" aria-label="Настройки"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+    </div>
+  </header>
 
-    <script>
-        // Инициализация Telegram Web App
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на весь экран
+  <section class="panel stats">
+    <div class="ring"><svg viewBox="0 0 70 70"><circle class="bgc" cx="35" cy="35" r="26.000"/><circle class="fg" id="ringFg" cx="35" cy="35" r="26"/></svg><b id="pct">0%</b></div>
+    <div class="lines">
+      <div>ACTIVE <em id="stAct">0</em></div>
+      <div>DONE <em id="stDone">0</em></div>
+      <div class="pend">UNSENT <em id="stPend">0</em></div>
+    </div>
+  </section>
 
-        const taskInput = document.getElementById('taskInput');
-        const addBtn = document.getElementById('addBtn');
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-f="all">Все<i id="cAll">0</i></button>
+    <button class="tab" data-f="active">Активные<i id="cAct">0</i></button>
+    <button class="tab" data-f="done">Готово<i id="cDone">0</i></button>
+  </nav>
 
-        // При нажатии на кнопку отправляем данные боту и закрываем мини-апп
-        addBtn.addEventListener('click', () => {
-            const text = taskInput.value.trim();
-            if (text) {
-                // Упаковываем задачу в JSON и передаем в Telegram
-                tg.sendData(JSON.stringify({ task: text }));
-                tg.close();
-            }
-        });
-    </script>
+  <section id="list"></section>
+</main>
+
+<button class="fab" id="fab" aria-label="Новая задача"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+
+<div class="overlay" id="sheetWrap">
+  <div class="sheet">
+    <h2>// new_task</h2>
+    <input type="text" id="inTitle" placeholder="Что нужно сделать?" maxlength="120" autocomplete="off">
+    <div class="lbl">Приоритет</div>
+    <div class="seg" id="prSeg">
+      <button data-p="0" class="p0">LOW</button>
+      <button data-p="1" class="p1 on">MED</button>
+      <button data-p="2" class="p2">HIGH</button>
+    </div>
+    <div class="lbl">Срок (необязательно)</div>
+    <input type="date" id="inDue">
+    <div class="row">
+      <button class="btn" id="btnCancel">Отмена</button>
+      <button class="btn main" id="btnAdd">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="setWrap">
+  <div class="sheet">
+    <h2>// settings</h2>
+    <div class="set">
+      <p>Отправлять боту сразу<small>После каждой новой задачи данные уходят боту, а приложение закрывается (так работает sendData в Telegram).</small></p>
+      <button class="sw" id="swAuto" aria-label="Переключить"></button>
+    </div>
+    <div class="note">Задачи хранятся на этом устройстве. Кнопка со стрелкой вверху отправляет боту только новые и изменённые задачи, после этого приложение закроется. Откройте его заново кнопкой внизу чата.</div>
+    <div class="row">
+      <button class="btn warn" id="btnClear">Удалить выполненные</button>
+      <button class="btn" id="btnClose">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  try { tg.setHeaderColor("#0F172A"); tg.setBackgroundColor("#0F172A"); } catch (e) {}
+}
+const haptic = t => { try { tg.HapticFeedback.impactOccurred(t || "light"); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const bytes = s => new TextEncoder().encode(s).length;
+
+/* ---------- Состояние ---------- */
+const KEY = "taskflow_v1";
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.tasks)) return Object.assign({ tasks: [], del: [], auto: false }, s);
+  } catch (e) {}
+  return { tasks: [], del: [], auto: false };
+}
+let S = load();
+let filter = "all", newPrio = 1;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { toast("Не удалось сохранить данные", true); }
+}
+
+/* ---------- Интерфейс ---------- */
+let toastTimer;
+function toast(msg, err, ms) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "show" + (err ? " err" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ""; }, ms || 2200);
+}
+
+const PR = ["LOW", "MED", "HIGH"];
+const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
+const TRASH = '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
+const EMPTY = '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12h8"/></svg>';
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function dueChip(t) {
+  if (!t.due) return "";
+  const [, m, d] = t.due.split("-");
+  const txt = d + "." + m;
+  if (t.done) return '<span class="chip">' + txt + "</span>";
+  const td = todayStr();
+  if (t.due < td) return '<span class="chip late">' + txt + " · просрочено</span>";
+  if (t.due === td) return '<span class="chip today">сегодня</span>';
+  return '<span class="chip">' + txt + "</span>";
+}
+
+function render() {
+  const total = S.tasks.length;
+  const done = S.tasks.filter(t => t.done).length;
+  const pend = S.tasks.filter(t => !t.sy).length + S.del.length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  $("ringFg").style.strokeDashoffset = 163.4 * (1 - pct / 100);
+  $("pct").textContent = pct + "%";
+  $("stAct").textContent = total - done;
+  $("stDone").textContent = done;
+  $("stPend").textContent = pend;
+  $("badge").hidden = !pend;
+  $("badge").textContent = pend;
+  $("cAll").textContent = total;
+  $("cAct").textContent = total - done;
+  $("cDone").textContent = done;
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+  $("swAuto").classList.toggle("on", S.auto);
+
+  const list = S.tasks
+    .filter(t => filter === "all" || (filter === "done" ? t.done : !t.done))
+    .sort((a, b) => a.done - b.done || b.prio - a.prio || b.created - a.created);
+
+  $("list").innerHTML = list.length ? list.map(t => `
+    <article class="task p${t.prio}${t.done ? " done" : ""}" data-id="${esc(t.id)}">
+      <button class="chk" data-act="toggle" aria-label="Отметить">${CHECK}</button>
+      <div class="body">
+        <div class="ttl">${esc(t.title)}</div>
+        <div class="meta"><span class="chip pr">${PR[t.prio]}</span>${dueChip(t)}${t.sy ? "" : '<span class="chip sy">не отправлено</span>'}</div>
+      </div>
+      <button class="del" data-act="del" aria-label="Удалить">${TRASH}</button>
+    </article>`).join("")
+    : `<div class="empty">${EMPTY}<div>// no tasks found</div><div style="margin-top:6px">Нажмите «+», чтобы добавить</div></div>`;
+}
+
+/* ---------- Действия с задачами ---------- */
+function addTask() {
+  const title = $("inTitle").value.trim();
+  if (!title) { toast("Введите название задачи", true); $("inTitle").focus(); return; }
+  const now = Date.now();
+  S.tasks.push({
+    id: now.toString(36) + Math.random().toString(36).slice(2, 6),
+    title: title.slice(0, 120), done: 0, prio: newPrio, due: $("inDue").value || "", created: now, sy: 0
+  });
+  save(); render(); closeSheet(); haptic("medium");
+  if (S.auto) syncToBot(); else toast("Задача добавлена");
+}
+function toggleTask(id) {
+  const t = S.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.done = t.done ? 0 : 1; t.sy = 0;
+  save(); render(); haptic();
+}
+function removeTask(id) {
+  const i = S.tasks.findIndex(x => x.id === id);
+  if (i < 0) return;
+  if (S.tasks[i].sy) S.del.push(id);   // боту нужно сообщить об удалении только если он знает задачу
+  S.tasks.splice(i, 1);
+  save(); render(); haptic();
+}
+
+/* ---------- Отправка боту ---------- */
+function syncToBot() {
+  if (!tg || !tg.sendData) { toast("Откройте приложение внутри Telegram", true); return; }
+  const pend = S.tasks.filter(t => !t.sy);
+  if (!pend.length && !S.del.length) { toast("Нечего отправлять: всё уже у бота"); return; }
+
+  let items = pend.slice(), dels = S.del.slice();
+  const build = () => JSON.stringify({
+    v: 1,
+    t: items.map(t => [t.id, t.title, t.done, t.prio, t.due, t.created]),
+    d: dels
+  });
+  while (bytes(build()) > 4000 && (items.length || dels.length)) { // лимит sendData: 4096 байт
+    if (items.length) items.pop(); else dels.pop();
+  }
+  if (!items.length && !dels.length) { toast("Данные слишком большие", true); return; }
+  const payload = build();
+
+  // помечаем отправленным до вызова: после sendData приложение сразу закроется
+  const backup = { ids: items.map(t => t.id), dels: dels.slice() };
+  items.forEach(t => { t.sy = 1; });
+  S.del = S.del.filter(x => !dels.includes(x));
+  save();
+
+  try { tg.sendData(payload); }
+  catch (e) { revert(backup); toast("Не удалось отправить: " + e.message, true); return; }
+
+  // если приложение всё ещё открыто, значит Telegram не принял данные
+  setTimeout(() => {
+    revert(backup); render();
+    toast("Данные не ушли. Откройте приложение кнопкой внизу чата (после /start), а не из меню или ссылки.", true, 6000);
+  }, 1800);
+}
+function revert(b) {
+  S.tasks.forEach(t => { if (b.ids.includes(t.id)) t.sy = 0; });
+  S.del = Array.from(new Set(S.del.concat(b.dels)));
+  save();
+}
+
+/* ---------- Окна ---------- */
+function openSheet() {
+  $("inTitle").value = ""; $("inDue").value = "";
+  setPrio(1);
+  $("sheetWrap").classList.add("on");
+  setTimeout(() => $("inTitle").focus(), 150);
+}
+function closeSheet() { $("sheetWrap").classList.remove("on"); }
+function setPrio(p) {
+  newPrio = p;
+  document.querySelectorAll("#prSeg button").forEach(b => b.classList.toggle("on", Number(b.dataset.p) === p));
+}
+
+/* ---------- События ---------- */
+$("fab").onclick = () => { haptic(); openSheet(); };
+$("btnAdd").onclick = addTask;
+$("btnCancel").onclick = closeSheet;
+$("inTitle").addEventListener("keydown", e => { if (e.key === "Enter") addTask(); });
+$("sheetWrap").addEventListener("click", e => { if (e.target === $("sheetWrap")) closeSheet(); });
+$("prSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { haptic(); setPrio(Number(b.dataset.p)); } });
+$("tabs").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) { filter = b.dataset.f; haptic(); render(); } });
+$("list").addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const id = btn.closest(".task").dataset.id;
+  if (btn.dataset.act === "toggle") toggleTask(id); else removeTask(id);
+});
+$("btnSync").onclick = syncToBot;
+$("btnSet").onclick = () => $("setWrap").classList.add("on");
+$("btnClose").onclick = () => $("setWrap").classList.remove("on");
+$("setWrap").addEventListener("click", e => { if (e.target === $("setWrap")) $("setWrap").classList.remove("on"); });
+$("swAuto").onclick = () => { S.auto = !S.auto; save(); render(); haptic(); };
+$("btnClear").onclick = () => {
+  const done = S.tasks.filter(t => t.done);
+  if (!done.length) { toast("Выполненных задач нет"); return; }
+  done.forEach(t => { if (t.sy) S.del.push(t.id); });
+  S.tasks = S.tasks.filter(t => !t.done);
+  save(); render(); $("setWrap").classList.remove("on"); toast("Выполненные удалены");
+};
+
+render();
+</script>
 </body>
 </html>
