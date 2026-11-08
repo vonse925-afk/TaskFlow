@@ -124,11 +124,11 @@
         </div>
 
         <div class="tasks-list" id="tasksList">
-            <!-- Сюда будут динамически добавляться задачи -->
+            <!-- Список задач -->
         </div>
 
         <div id="emptyState" class="empty-state">
-            Список задач пуст. Добавь первую!
+            Введи задачу и нажми +, чтобы отправить её в бот.
         </div>
     </div>
 
@@ -139,44 +139,16 @@
 
         const taskInput = document.getElementById('taskInput');
         const addBtn = document.getElementById('addBtn');
-        const tasksList = document.getElementById('tasksList');
-        const emptyState = document.getElementById('emptyState');
 
-        let tasks = [
-            "Купить молоко",
-            "Сходить в зал в 16:00"
-        ];
-
-        function renderTasks() {
-            tasksList.innerHTML = '';
-            if (tasks.length === 0) {
-                emptyState.style.display = 'block';
-                return;
-            }
-            emptyState.style.display = 'none';
-
-            tasks.forEach((task, index) => {
-                const card = document.createElement('div');
-                card.className = 'task-card';
-                card.innerHTML = `
-                    <span class="task-text">${index + 1}. ${task}</span>
-                `;
-                tasksList.appendChild(card);
-            });
-        }
-
+        // При нажатии на кнопку отправляем данные боту и закрываем мини-апп
         addBtn.addEventListener('click', () => {
             const text = taskInput.value.trim();
             if (text) {
-                tasks.push(text);
-                taskInput.value = '';
-                renderTasks();
-                // Здесь в будущем мы будем отправлять данные обратно нашему Python-серверу!
+                // Упаковываем задачу в JSON и передаем в Telegram
+                tg.sendData(JSON.stringify({ task: text }));
+                tg.close();
             }
         });
-
-        // Первичный рендер
-        renderTasks();
     </script>
 </body>
 </html>
