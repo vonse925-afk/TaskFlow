@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow App</title>
+    <!-- Подключаем скрипт Telegram Web App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #0F172A;
+            --surface-color: #1E293B;
+            --accent-green: #10B981;
+            --accent-indigo: #6366F1;
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            background-color: var(--surface-color);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--accent-green);
+        }
+
+        button {
+            background-color: var(--accent-green);
+            color: #0F172A;
+            border: none;
+            border-radius: 12px;
+            padding: 0 20px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task-card {
+            background-color: var(--surface-color);
+            padding: 14px 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--accent-green);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-text {
+            font-size: 15px;
+            word-break: break-all;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 40px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>TaskFlow</h2>
+        <div class="subtitle">Твое личное хранилище задач</div>
+
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="Новая задача...">
+            <button id="addBtn">+</button>
+        </div>
+
+        <div class="tasks-list" id="tasksList">
+            <!-- Сюда будут динамически добавляться задачи -->
+        </div>
+
+        <div id="emptyState" class="empty-state">
+            Список задач пуст. Добавь первую!
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Разворачиваем на весь экран
+
+        const taskInput = document.getElementById('taskInput');
+        const addBtn = document.getElementById('addBtn');
+        const tasksList = document.getElementById('tasksList');
+        const emptyState = document.getElementById('emptyState');
+
+        let tasks = [
+            "Купить молоко",
+            "Сходить в зал в 16:00"
+        ];
+
+        function renderTasks() {
+            tasksList.innerHTML = '';
+            if (tasks.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            emptyState.style.display = 'none';
+
+            tasks.forEach((task, index) => {
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <span class="task-text">${index + 1}. ${task}</span>
+                `;
+                tasksList.appendChild(card);
+            });
+        }
+
+        addBtn.addEventListener('click', () => {
+            const text = taskInput.value.trim();
+            if (text) {
+                tasks.push(text);
+                taskInput.value = '';
+                renderTasks();
+                // Здесь в будущем мы будем отправлять данные обратно нашему Python-серверу!
+            }
+        });
+
+        // Первичный рендер
+        renderTasks();
+    </script>
+</body>
+</html>
